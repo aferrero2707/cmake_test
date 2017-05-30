@@ -52,7 +52,7 @@ include_directories(${GLIBMM_INCLUDE_DIRS})
 #link_directories(${XML2_LIBRARY_DIRS})
 
 add_executable(main main.cc)
-set_target_properties(main LINK_FLAGS "-static-libgcc -static-libstdc++")
+#set_target_properties(main LINK_FLAGS "-static-libgcc -static-libstdc++")
 target_link_libraries(main
   ${XML2_LIBRARIES_FULLPATH}
   ${GLIBMM_LIBRARIES_FULLPATH}
