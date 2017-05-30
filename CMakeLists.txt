@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
+add_definitions (-D_GLIBCXX_USE_CXX11_ABI=0)
+
 
 set(CMAKE_C_USE_RESPONSE_FILE_FOR_OBJECTS 0)
 set(CMAKE_C_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
