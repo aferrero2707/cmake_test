@@ -36,6 +36,6 @@ include_directories(${XML2_INCLUDE_DIRS})
 add_executable(main main.cc)
 
 target_link_libraries(main
-  ${XML2_LIBRARIES_FULLPATH}
-  "/path/to/lib,ylib.dll.a"
+  #${XML2_LIBRARIES_FULLPATH}
+  "/home/travis/.local/share/crossroad/roads/w64/phf-build/lib/libxml2.dll.a"
 )
