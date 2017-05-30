@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-#include <glibmm.h>
-#include <ustring.h>
+//#include <glibmm.h>
+#include <glibmm/ustring.h>
 
 std::string get_data_dir() { return "/data/dir"; }
 
