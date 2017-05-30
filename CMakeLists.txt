@@ -30,12 +30,16 @@ message(STATUS "XML2 libraries: ${XML2_LIBRARIES}")
 get_lib_fullpath(XML2)
 message(STATUS "XML2 libraries (full paths): ${XML2_LIBRARIES_FULLPATH}")
 
+pkg_check_modules(GLIBMM glibmm-2.4) 
+get_lib_fullpath(GLIBMM)
+
 include_directories(${XML2_INCLUDE_DIRS})
+include_directories(${GLIBMM_INCLUDE_DIRS})
 #link_directories(${XML2_LIBRARY_DIRS})
 
 add_executable(main main.cc)
 
 target_link_libraries(main
-  #${XML2_LIBRARIES_FULLPATH}
-  "/home/travis/.local/share/crossroad/roads/w64/phf-build/lib/libxml2.dll.a"
+  ${XML2_LIBRARIES_FULLPATH}
+  ${GLIBMM_LIBRARIES_FULLPATH}
 )
