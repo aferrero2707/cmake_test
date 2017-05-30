@@ -31,7 +31,7 @@ get_lib_fullpath(XML2)
 message(STATUS "XML2 libraries (full paths): ${XML2_LIBRARIES_FULLPATH}")
 
 include_directories(${XML2_INCLUDE_DIRS})
-link_directories(${XML2_LIBRARY_DIRS})
+#link_directories(${XML2_LIBRARY_DIRS})
 
 add_executable(main main.cc)
 
