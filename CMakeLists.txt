@@ -9,7 +9,7 @@ set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 0)
 set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
 
 SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -mwindows -std=gnu++11 -fno-ipa-sra -fpermissive") 
-#SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -std=gnu++11 -fpermissive") 
+#SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -fpermissive") 
 
 #link_directories("/this/is/a/test/path")
 
