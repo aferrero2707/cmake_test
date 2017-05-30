@@ -10,8 +10,8 @@ std::string get_data_dir() { return "/data/dir"; }
 
 int main(int argc, char** argv)
 {
-  std::string
-  Glib::ustring dataPath = get_data_dir();
+  Glib::ustring dataPath;
+  dataPath = get_data_dir();
   xmlDocPtr doc; /* the resulting document tree */
 
   doc = xmlReadFile("file.xml", NULL, 0);
