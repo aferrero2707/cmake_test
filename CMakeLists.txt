@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_definitions (-D_GLIBCXX_USE_CXX11_ABI=0)
+#add_definitions (-D_GLIBCXX_USE_CXX11_ABI=0)
 
 
 set(CMAKE_C_USE_RESPONSE_FILE_FOR_OBJECTS 0)
@@ -8,8 +8,8 @@ set(CMAKE_C_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
 set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 0)
 set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
 
-#SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -mwindows -std=gnu++11 -fno-ipa-sra -fpermissive") 
-SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -std=gnu++11 -fpermissive") 
+SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -mwindows -std=gnu++11 -fno-ipa-sra -fpermissive") 
+#SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -std=gnu++11 -fpermissive") 
 
 #link_directories("/this/is/a/test/path")
 
@@ -52,8 +52,9 @@ include_directories(${GLIBMM_INCLUDE_DIRS})
 #link_directories(${XML2_LIBRARY_DIRS})
 
 add_executable(main main.cc)
-
+set_target_properties(main LINK_FLAGS "-static-libgcc -static-libstdc++")
 target_link_libraries(main
   ${XML2_LIBRARIES_FULLPATH}
   ${GLIBMM_LIBRARIES_FULLPATH}
+  stdc++-6
 )
