@@ -56,5 +56,4 @@ add_executable(main main.cc)
 target_link_libraries(main
   ${XML2_LIBRARIES_FULLPATH}
   ${GLIBMM_LIBRARIES_FULLPATH}
-  stdc++-6
 )
