@@ -25,8 +25,10 @@ macro(get_lib_fullpath _prefix)
 endmacro()
 
 pkg_check_modules(XML2 REQUIRED libxml-2.0)
+message(STATUS "XML2 library dirs: ${XML2_LIBRARY_DIRS}")
+message(STATUS "XML2 libraries: ${XML2_LIBRARIES}")
 get_lib_fullpath(XML2)
-message(STATUS "XML2 libraries: ${XML2_LIBRARIES_FULLPATH}")
+message(STATUS "XML2 libraries (full paths): ${XML2_LIBRARIES_FULLPATH}")
 
 include_directories(${XML2_INCLUDE_DIRS})
 link_directories(${XML2_LIBRARY_DIRS})
