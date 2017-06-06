@@ -1,6 +1,4 @@
 
-mkdir -p build
-cd build
 # VIPS
 wget http://www.vips.ecs.soton.ac.uk/supported/8.4/vips-8.4.5.tar.gz
 if [ $? -ne 0 ]; then exit 1; fi
