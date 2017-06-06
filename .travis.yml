@@ -43,7 +43,7 @@ matrix:
             - $HOME/inst/bin/crossroad w64 vipstest-build --run ../windows/package-w64.sh
             #- wget -c https://github.com/aferrero2707/uploadtool/raw/master/upload.sh
             #- wget -c https://github.com/aferrero2707/uploadtool/raw/master/upload_rotate.sh
-            #- bash  ./upload_rotate.sh photoflow*.zip
+            #- bash  ./upload_rotate.sh photoflow*.zip 
 
 branches:
   except:
