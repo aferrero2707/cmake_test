@@ -58,9 +58,11 @@ include_directories(${XML2_INCLUDE_DIRS})
 include_directories(${VIPS_INCLUDE_DIRS})
 #link_directories(${XML2_LIBRARY_DIRS})
 
-add_executable(main main.cc)
-#set_target_properties(main LINK_FLAGS "-static-libgcc -static-libstdc++")
+add_executable(vipstest main.cc)
+#set_target_properties(vipstest LINK_FLAGS "-static-libgcc -static-libstdc++")
 target_link_libraries(main
   ${XML2_LIBRARIES_FULLPATH}
   ${VIPS_LIBRARIES_FULLPATH}
 )
+
+INSTALL(TARGETS vipstest RUNTIME DESTINATION bin)
