@@ -44,16 +44,23 @@ message(STATUS "XML2 libraries: ${XML2_LIBRARIES}")
 get_lib_fullpath(XML2)
 message(STATUS "XML2 libraries (full paths): ${XML2_LIBRARIES_FULLPATH}")
 
-pkg_check_modules(GLIBMM glibmm-2.4) 
-get_lib_fullpath(GLIBMM)
+#pkg_check_modules(GLIBMM glibmm-2.4) 
+#get_lib_fullpath(GLIBMM)
+
+pkg_check_modules(VIPS REQUIRED vips>=8.3.3)
+#pkg_check_modules(VIPSCC REQUIRED vipsCC)
+MESSAGE( STATUS "VIPS_INCLUDE_DIRS:         " ${VIPS_INCLUDE_DIRS} )
+MESSAGE( STATUS "VIPS_LIBRARY_DIRS:         " ${VIPS_LIBRARY_DIRS} )
+get_lib_fullpath(VIPS)
+
 
 include_directories(${XML2_INCLUDE_DIRS})
-include_directories(${GLIBMM_INCLUDE_DIRS})
+include_directories(${VIPS_INCLUDE_DIRS})
 #link_directories(${XML2_LIBRARY_DIRS})
 
 add_executable(main main.cc)
 #set_target_properties(main LINK_FLAGS "-static-libgcc -static-libstdc++")
 target_link_libraries(main
   ${XML2_LIBRARIES_FULLPATH}
-  ${GLIBMM_LIBRARIES_FULLPATH}
+  ${VIPS_LIBRARIES_FULLPATH}
 )
