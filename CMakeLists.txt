@@ -60,7 +60,7 @@ include_directories(${VIPS_INCLUDE_DIRS})
 
 add_executable(vipstest main.cc)
 #set_target_properties(vipstest LINK_FLAGS "-static-libgcc -static-libstdc++")
-target_link_libraries(main
+target_link_libraries(vipstest
   ${XML2_LIBRARIES_FULLPATH}
   ${VIPS_LIBRARIES_FULLPATH}
 )
