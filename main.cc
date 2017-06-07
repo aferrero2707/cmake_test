@@ -1,6 +1,12 @@
 #include<iostream>
 #include <stdio.h>
 #include <vips/vips.h>
+#include <stdlib.h>
+
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
+#endif
 
 
 int main(int argc, char** argv)
