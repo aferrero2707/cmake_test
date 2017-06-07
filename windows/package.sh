@@ -32,7 +32,7 @@ basedir=`pwd`
 packagedir=packages
 
 # unzip to here
-installdir=$HOME/.local/share/crossroad/roads/w64/vipstest-build
+installdir=$HOME/.local/share/crossroad/roads/$arch/vipstest-build
 
 # jhbuild will download sources to here 
 checkoutdir=source
