@@ -2,4 +2,4 @@
 
 dir=$(dirname "$0")
 echo "dir: $dir"
-$dir/package.sh w64
+../windows/package.sh w64
