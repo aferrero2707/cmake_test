@@ -18,10 +18,12 @@ transfer()
 	rm -f $tmpfile; 
 }
 
-photoflow_package=vipstest
-photoflow_version="$(date +%Y%m%d)"
-#photoflow_version=0.2.7
-#photoflow_version=$(cat checkout/PhotoFlow/VERSION | head -n 1)
+package_name=vipstest
+arch=$1
+package_version="${arch}-$(date +%Y%m%d)"
+#package_version=0.2.7
+#package_version=$(cat checkout/PhotoFlow/VERSION | head -n 1)
+
 
 # stuff is in here
 basedir=`pwd`
@@ -35,9 +37,14 @@ installdir=$HOME/.local/share/crossroad/roads/w64/vipstest-build
 # jhbuild will download sources to here 
 checkoutdir=source
 
-mingw_prefix=x86_64-w64-mingw32-
+if [ x"$arch" = "xw32" ]; then
+	mingw_prefix=i686-w64-mingw32
+fi
+if [ x"$arch" = "xw64" ]; then
+	mingw_prefix=x86_64-w64-mingw32
+fi
 
-repackagedir=$photoflow_package-$photoflow_version
+repackagedir=$package_name-$package_version
 
 ls -l $installdir/bin
 
@@ -57,8 +64,12 @@ echo cleaning build $repackagedir
 if [ ! -e $repackagedir/bin ]; then echo "$repackagedir/bin not found."; exit; fi
 if [ ! -e $repackagedir/lib ]; then echo "$repackagedir/lib not found."; exit; fi
 
-(cd $repackagedir/bin; wget ftp://ftp.equation.com/gdb/64/gdb.exe)
-
+if [ x"$arch" = "xw32" ]; then
+	(cd $repackagedir/bin; wget ftp://ftp.equation.com/gdb/32/gdb.exe)
+fi
+if [ x"$arch" = "xw64" ]; then
+	(cd $repackagedir/bin; wget ftp://ftp.equation.com/gdb/64/gdb.exe)
+fi
 echo "Before cleaning $repackagedir/bin"
 #read dummy
 
@@ -93,35 +104,35 @@ echo "Before cleaning $repackagedir/bin"
 ( cd $repackagedir ; rm -rf src )
 
 # we need to copy the C++ runtime dlls in there
-gccmingwlibdir=/usr/lib/gcc/x86_64-w64-mingw32/4.8
-mingwlibdir=/usr/x86_64-w64-mingw32/lib
+gccmingwlibdir=/usr/lib/gcc/$mingw_prefix/4.8
+mingwlibdir=/usr/$mingw_prefix/lib
 cp -L $gccmingwlibdir/*.dll $repackagedir/bin
 cp -L $mingwlibdir/*.dll $repackagedir/bin
 
 #exit
 
-#echo creating $photoflow_package-$photoflow_version.zip
-#rm -f $photoflow_package-$photoflow_version.zip
-#zip -r -qq $photoflow_package-$photoflow_version.zip $photoflow_package-$photoflow_version
+#echo creating $package_name-$package_version.zip
+#rm -f $package_name-$package_version.zip
+#zip -r -qq $package_name-$package_version.zip $package_name-$package_version
 
-rm -f $photoflow_package-$photoflow_version.zip
-zip -r $photoflow_package-$photoflow_version.zip $photoflow_package-$photoflow_version
+rm -f $package_name-$package_version.zip
+zip -r $package_name-$package_version.zip $package_name-$package_version
 
-transfer $photoflow_package-$photoflow_version.zip
+transfer $package_name-$package_version.zip
 
 exit
 
 # have to make in a subdir to make sure makensis does not grab other stuff
-echo building installer nsis/$photoflow_package-$photoflow_version-setup.exe
-( cd nsis ; rm -rf $photoflow_package-$photoflow_version ; 
-#unzip -qq -o ../$photoflow_package-$photoflow_version.zip ;
-rm -rf $photoflow_package-$photoflow_version
-mv ../$photoflow_package-$photoflow_version .
-#makensis -DVERSION=$photoflow_version $photoflow_package.nsi > makensis.log 
+echo building installer nsis/$package_name-$package_version-setup.exe
+( cd nsis ; rm -rf $package_name-$package_version ; 
+#unzip -qq -o ../$package_name-$package_version.zip ;
+rm -rf $package_name-$package_version
+mv ../$package_name-$package_version .
+#makensis -DVERSION=$package_version $package_name.nsi > makensis.log 
 )
 cd nsis
-rm -f $photoflow_package-$photoflow_version.zip
-zip -r $photoflow_package-$photoflow_version.zip $photoflow_package-$photoflow_version
-rm -rf $photoflow_package-$photoflow_version
-rm -f $photoflow_package-$photoflow_version-setup.zip
-#zip $photoflow_package-$photoflow_version-setup.zip $photoflow_package-$photoflow_version-setup.exe
+rm -f $package_name-$package_version.zip
+zip -r $package_name-$package_version.zip $package_name-$package_version
+rm -rf $package_name-$package_version
+rm -f $package_name-$package_version-setup.zip
+#zip $package_name-$package_version-setup.zip $package_name-$package_version-setup.exe

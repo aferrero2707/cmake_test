@@ -1,6 +1,6 @@
 #include<iostream>
 #include <stdio.h>
-#include <vips.h>
+#include <vips/vips.h>
 
 
 int main(int argc, char** argv)
