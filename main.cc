@@ -12,9 +12,9 @@ typedef float MY_PX_TYPE;
 #include "lineblur.cc"
 
 #define RADIUS 50
-const size_t W=10000-100;
+const size_t W=3000-100;
 const size_t H=W;
-const int iterations = 2;
+const int iterations = 5;
 
 
 
@@ -42,7 +42,7 @@ void fill_pattern(MY_PX_TYPE* ibuf, size_t W, size_t H)
 }
 
 
-void lineblur_simple(MY_PX_TYPE* ibuf, MY_PX_TYPE* obuf, size_t W, size_t H, int radius)
+void lineblur_simple_h(MY_PX_TYPE* ibuf, MY_PX_TYPE* obuf, size_t W, size_t H, int radius)
 {
   //std::cout<<"lineblur_simple("<<W<<","<<H<<","<<radius<<")"<<std::endl;
   float R = radius*2 + 1;
@@ -74,6 +74,43 @@ void lineblur_simple(MY_PX_TYPE* ibuf, MY_PX_TYPE* obuf, size_t W, size_t H, int
 }
 
 
+void lineblur_simple_v(MY_PX_TYPE* ibuf, MY_PX_TYPE* obuf, size_t W, size_t H, int radius)
+{
+  //std::cout<<"lineblur_simple("<<W<<","<<H<<","<<radius<<")"<<std::endl;
+  float R = radius*2 + 1;
+  float R2 = radius*2;
+  int rstart;
+  int rend;
+  int rend2;
+  int i, row, col, row2;
+  MY_PX_TYPE *pi, *pi2, *po;
+  for(row = 0; row < H; row++) {
+    //if(row%10 == 0)std::cout<<"row="<<row<<std::endl;
+    pi = ibuf + row*W;
+    po = obuf + row*W;
+    rstart = row-radius;
+    rend = rend2 = row+radius; if(rend >= H) rend = H-1;
+    for(col = 0; col < W; col++) {
+      MY_PX_TYPE result = 0;
+      pi2 = ibuf;
+      for(row2 = rstart; row2 < 0; row2++) {
+        result += pi2[col];
+      }
+      pi2 = ibuf + row2*W;
+      for(; row2 <= rend; row2++) {
+        result += pi2[col];
+        pi2 += W;
+      }
+      pi2 -= W;
+      for(; row2 <= rend2; row2++) {
+        result += pi2[col];
+      }
+      po[col] = result / R;
+    }
+  }
+}
+
+
 void lineblur_simple_run()
 {
   GTimer* timer = g_timer_new();
@@ -98,20 +135,22 @@ void lineblur_simple_run()
   vips_jpegsave( in, "a.jpg", "Q", 50, NULL );
   VIPS_UNREF(in);
 
-  std::cout<<"before lineblur_simple(1)"<<std::endl;
+  //std::cout<<"before lineblur_simple(1)"<<std::endl;
   g_timer_start(timer);
   for(int i = 0; i < iterations; i++) {
-    lineblur_simple(ibuf, obuf, W, H, RADIUS);
+    lineblur_simple_v(ibuf, obuf, W, H, RADIUS);
     MY_PX_TYPE* tbuf = obuf;
     obuf = ibuf;
     ibuf = tbuf;
   }
   g_timer_stop(timer);
-  std::cout<<"after lineblur_simple(1)"<<std::endl;
-  std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl;
+  //std::cout<<"after lineblur_simple(1)"<<std::endl;
+  std::cout<<std::endl<<std::endl;
+  std::cout<<"Simple buffer processing"<<std::endl;
+  std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl<<std::endl;
 
   VipsImage* out = vips_image_new_from_memory( ibuf, W*H*sizeof(MY_PX_TYPE), W, H, 1, VIPS_FORMAT_FLOAT );
-  vips_jpegsave( out, "b.jpg", "Q", 50, NULL );
+  vips_jpegsave( out, "o1.jpg", "Q", 50, NULL );
   VIPS_UNREF(out);
 }
 
@@ -155,7 +194,7 @@ void lineblur_vips1_run()
   g_timer_stop(timer);
   std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl<<std::endl<<"======================"<<std::endl;
 
-  vips_jpegsave( out, "c.jpg", "Q", 50, NULL );
+  vips_jpegsave( out, "v1.jpg", "Q", 50, NULL );
 
   VIPS_UNREF(out);
   VIPS_UNREF(in);
@@ -200,9 +239,11 @@ void lineblur_vips2_run()
     out = ti;
   }
   g_timer_stop(timer);
-  std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl<<std::endl<<std::endl;
+  std::cout<<std::endl<<std::endl;
+  std::cout<<"VIPS processing with intermediate buffer"<<std::endl;
+  std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl<<std::endl;
 
-  vips_jpegsave( in, "c.jpg", "Q", 50, NULL );
+  vips_jpegsave( in, "v2.jpg", "Q", 50, NULL );
 
   VIPS_UNREF(out);
   VIPS_UNREF(in);
@@ -268,11 +309,13 @@ void lineblur_vips3_run()
   g_timer_start(timer);
   void* obuf = image_tree_sink_memory( tree, &area );
   g_timer_stop(timer);
-  std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl<<std::endl<<std::endl;
+  std::cout<<std::endl<<std::endl;
+  std::cout<<"VIPS cached processing"<<std::endl;
+  std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl<<std::endl;
 
   VipsImage* out = vips_image_new_from_memory( obuf, W*H*sizeof(MY_PX_TYPE), W, H, 1, VIPS_FORMAT_FLOAT );
   //vips_image_write(tree->root->image->image, out);
-  vips_jpegsave( out, "d.jpg", "Q", 50, NULL );
+  vips_jpegsave( out, "v3.jpg", "Q", 50, NULL );
 
   VIPS_UNREF(out);
   VIPS_UNREF(in);

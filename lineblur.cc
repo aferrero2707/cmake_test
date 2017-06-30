@@ -98,6 +98,9 @@ vips_lineblur_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop
 {
   VipsRegion **ir = (VipsRegion **) seq;
   VipsLineBlur *lineblur = (VipsLineBlur *) b;
+  g_assert(lineblur);
+  VipsImageInfo* info = lineblur->info;
+
 
   /* Do the actual processing
    */
@@ -106,11 +109,11 @@ vips_lineblur_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop
    */
   const VipsRect *r = &oreg->valid;
   VipsRect s = {
-      r->left - lineblur->radius, r->top - lineblur->radius,
-      r->width + lineblur->radius*2+1, r->height + lineblur->radius*2+1
+      r->left - 0, r->top - lineblur->radius,
+      r->width + 0, r->height + lineblur->radius*2+1
   };
   VipsRect rshifted = {
-      r->left - lineblur->radius, r->top - lineblur->radius,
+      r->left - 0, r->top - lineblur->radius,
       r->width, r->height
   };
   VipsRect r_img = {0, 0, ir[0]->im->Xsize, ir[0]->im->Ysize};
@@ -134,18 +137,18 @@ vips_lineblur_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop
   }
 
   int i;
-  int x, y, x2;
+  int x, y, x2, y2;
 
-  if( lineblur->info && lineblur->info->valid==1 && lineblur->info->buf &&
-      vips_rect_includesrect(&(lineblur->info->rect), &rshifted) ) {
+  if( info && info->valid==1 && info->buf &&
+      vips_rect_includesrect(&(info->rect), &rshifted) ) {
     // copy buffered pixel data
     size_t pelsz = VIPS_IMAGE_SIZEOF_PEL(oreg->im);
-    size_t buflinesz = pelsz * lineblur->info->rect.width;
+    size_t buflinesz = pelsz * info->rect.width;
     size_t outlinesz = pelsz * r->width;
-    int dy = rshifted.top - lineblur->info->rect.top;
-    int dx = rshifted.left - lineblur->info->rect.left;
+    int dy = rshifted.top - info->rect.top;
+    int dx = rshifted.left - info->rect.left;
     for( y = 0; y < r->height; y++ ) {
-      MY_PX_TYPE *p = (MY_PX_TYPE *)(lineblur->info->buf + (y+dy)*buflinesz + dx*pelsz);
+      MY_PX_TYPE *p = (MY_PX_TYPE *)(info->buf + (y+dy)*buflinesz + dx*pelsz);
       MY_PX_TYPE *q = (MY_PX_TYPE *)VIPS_REGION_ADDR( oreg, r->left, r->top + y );
       memcpy(q, p, outlinesz);
     }
@@ -167,7 +170,9 @@ vips_lineblur_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop
    */
   if(false && s.top==0 && s.left==0)
     printf("processing region...\n");
+
   int line_size = r->width * ir[0]->im->Bands;
+  /*
   for( y = 0; y < r->height; y++ ) {
     MY_PX_TYPE *p = (MY_PX_TYPE *)
               VIPS_REGION_ADDR( ir[0], s.left, r->top + y );
@@ -185,8 +190,30 @@ vips_lineblur_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop
       //if(s.top+y==0 && x+r->left == oreg->im->Xsize-lineblur->radius-1)
       //   std::cout<<"x="<<x<<"  p["<<x<<"]="<<(float)p[x]<<"  pout["<<x<<"]="<<(float)q[x]<<std::endl;
     }
-
   }
+  */
+  size_t rowstride = VIPS_REGION_LSKIP(ir[0])/sizeof(MY_PX_TYPE);
+  for( y = 0; y < r->height; y++ ) {
+    MY_PX_TYPE *p = (MY_PX_TYPE *)
+              VIPS_REGION_ADDR( ir[0], r->left, s.top + y );
+    MY_PX_TYPE *q = (MY_PX_TYPE *)
+              VIPS_REGION_ADDR( oreg, r->left, r->top + y );
+    MY_PX_TYPE *p2;
+    for( x = 0; x < line_size; x++ ) {
+      p2 = p;
+      MY_PX_TYPE result = 0;
+      for( y2 = y, i = 0; i < R; y2++, i++ ) {
+        result += p2[x];
+        p2 += rowstride;
+        //if(s.top+y==0 && x+r->left == oreg->im->Xsize-lineblur->radius-1)
+        //  std::cout<<"  x2="<<x2<<"  p["<<x2<<"]="<<(float)p[x2]<<std::endl;
+      }
+      q[x] = result / R;
+      //if(s.top+y==0 && x+r->left == oreg->im->Xsize-lineblur->radius-1)
+      //   std::cout<<"x="<<x<<"  p["<<x<<"]="<<(float)p[x]<<"  pout["<<x<<"]="<<(float)q[x]<<std::endl;
+    }
+  }
+
   if(false && s.top==0 && s.left==0)
     printf("...region processed\n");
   return( 0 );
@@ -327,7 +354,10 @@ vips_lineblur_int( VipsImage* in, VipsImage **out, int radius, VipsImageInfo* in
 {
   int result;
 
-  if( info ) info->xpadding = info->ypadding = radius;
+  if( info ) {
+    info->xpadding = 0;
+    info->ypadding = radius;
+  }
 
   //std::cout<<"vips_lineblur: in="<<in<<std::endl;
   result = vips_call( "mylineblur", in, out, radius, info, NULL );
@@ -348,8 +378,8 @@ vips_lineblur( VipsImage* in, VipsImage **out, int radius, VipsImageInfo* info=N
   //std::cout<<"lineblur in size: "<<in->Xsize<<","<<in->Ysize<<std::endl;
 
   if( radius > 0) {
-    if( vips_embed( in, &extended, radius, radius,
-        in->Xsize + radius*2 + 1, in->Ysize + radius*2 + 1,
+    if( vips_embed( in, &extended, 0, radius,
+        in->Xsize, in->Ysize + radius*2 + 1,
         "extend", VIPS_EXTEND_COPY, NULL ) )
       return( -1 );
   } else {
@@ -364,7 +394,7 @@ vips_lineblur( VipsImage* in, VipsImage **out, int radius, VipsImageInfo* info=N
   //std::cout<<"lineblur blurred size: "<<blurred->Xsize<<","<<blurred->Ysize<<std::endl;
 
   if( radius > 0) {
-    if( vips_crop( blurred, out, radius, radius,
+    if( vips_crop( blurred, out, 0, radius,
         in->Xsize, in->Ysize, NULL ) )
       return( -1 );
     g_object_unref(blurred);

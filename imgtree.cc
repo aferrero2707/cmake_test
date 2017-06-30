@@ -155,11 +155,17 @@ int image_tree_sink_node(VipsImageTreeNode* node, VipsRect* area, int alloc=1, c
   }
 
 
-  VipsImage* cropped;
+  VipsImage* cropped = NULL;
+  bool do_crop = false;
+  if( do_crop ) {
   if( vips_crop( node->image->image, &cropped,
       info->rect.left, info->rect.top,
       info->rect.width, info->rect.height, NULL ) )
     return( -1 );
+  } else {
+    cropped = node->image->image;
+    g_object_ref(cropped);
+  }
 
 
   // write image data into buffer
