@@ -8,7 +8,9 @@ set(CMAKE_C_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
 set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS 0)
 set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
 
-SET(CMAKE_CXX_FLAGS_RELEASE " -g -O3 -ftree-vectorize -fpermissive") 
+set(CMAKE_BUILD_TYPE RELEASE)
+
+SET(CMAKE_CXX_FLAGS_RELEASE " -g -O3 -fpermissive") 
 #SET(CMAKE_CXX_FLAGS_RELEASE " -O3 -ftree-vectorize -std=gnu++11 -fpermissive") 
 
 #link_directories("/this/is/a/test/path")
@@ -51,6 +53,7 @@ pkg_check_modules(VIPS REQUIRED vips>=8.3.3)
 #pkg_check_modules(VIPSCC REQUIRED vipsCC)
 MESSAGE( STATUS "VIPS_INCLUDE_DIRS:         " ${VIPS_INCLUDE_DIRS} )
 MESSAGE( STATUS "VIPS_LIBRARY_DIRS:         " ${VIPS_LIBRARY_DIRS} )
+MESSAGE( STATUS "VIPS_LIBRARIES:            " ${VIPS_LIBRARIES} )
 get_lib_fullpath(VIPS)
 
 
@@ -61,8 +64,8 @@ include_directories(${VIPS_INCLUDE_DIRS})
 add_executable(vipstest main.cc)
 #set_target_properties(vipstest LINK_FLAGS "-static-libgcc -static-libstdc++")
 target_link_libraries(vipstest
-  ${XML2_LIBRARIES_FULLPATH}
-  ${VIPS_LIBRARIES_FULLPATH}
+  ${XML2_LIBRARIES}
+  ${VIPS_LIBRARIES}
 )
 
 INSTALL(TARGETS vipstest RUNTIME DESTINATION bin)
