@@ -106,13 +106,18 @@ vips_slowop_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop )
    */
   VipsRect *r = &oreg->valid;
 
+  if( false && r->top == 0 && r->left == 0 )
+    std::cout<<"[slowop] output region: top="<<r->top<<" left="<<r->left
+    <<" width="<<r->width<<" height="<<r->height<<std::endl;
+
   /* Prepare the input images
    */
   if( vips_region_prepare( ir[0], r ) )
     return( -1 );
 
   int i;
-  int x, y, x2, y2;
+  int x, y, x2, y2, k;
+  float RGB[3];
 
   /* Do the actual processing
    */
@@ -122,9 +127,20 @@ vips_slowop_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop )
               VIPS_REGION_ADDR( ir[0], r->left, r->top + y );
     MY_PX_TYPE *q = (MY_PX_TYPE *)
               VIPS_REGION_ADDR( oreg, r->left, r->top + y );
-    for( x = 0; x < line_size; x+=5 ) {
+    for( x = 0; x < line_size; x+=3 ) {
+      RGB[0] = p[x];
+      RGB[1] = p[x+1];
+      RGB[2] = p[x+2];
+      for(i=0; i<20;i++) {
+      for( k=0; k < 3; k++) {
+        RGB[k] = powf( RGB[k], slowop->gamma );
+      }
+      }
+      q[x] = RGB[0];
+      q[x+1] = RGB[1];
+      q[x+2] = RGB[2];
       //q[x] = p[x]; //if( (x%100) == 0 )
-      for(i=0; i<50;i++) q[x] = powf( p[x], slowop->gamma );
+      //for(i=0; i<50;i++) q[x] = powf( p[x], slowop->gamma );
       //g_usleep(10);
     }
   }

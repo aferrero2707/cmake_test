@@ -3,6 +3,12 @@
 #include <vips/vips.h>
 #include <stdlib.h>
 
+#define BENCHMARK
+#include "StopWatch.h"
+
+extern int vips__leak;
+
+
 typedef float MY_PX_TYPE;
 
 #define _(a) (a)
@@ -13,9 +19,12 @@ typedef float MY_PX_TYPE;
 #include "slowop.cc"
 
 #define RADIUS 200
-const size_t W=9000-100;
-const size_t H=W;
+size_t W=9000-100;
+size_t H=W;
 const int iterations = 5;
+
+VipsImage* image_in;
+std::string fname_out;
 
 MY_PX_TYPE* ibuf;
 MY_PX_TYPE* obuf;
@@ -46,39 +55,44 @@ void fill_pattern(MY_PX_TYPE* ibuf, size_t W, size_t H)
 }
 
 
+void jpeg_save(VipsImage* in)
+{
+  BENCHFUN
+  vips_jpegsave( in, fname_out.c_str(), "Q", 75, NULL );
+}
+
+
 void vips_run1(int padding, bool do_caching, bool cache_blur)
 {
-  const int TS = 128;
-  GTimer* timer = g_timer_new();
+  VipsImage* in = image_in; g_object_ref(in);
 
-  VipsImage* in = vips_image_new_from_memory( ibuf, W*H*sizeof(MY_PX_TYPE), W, H, 1, VIPS_FORMAT_FLOAT );
-
-  VipsImage* cached1 = in;
-  if( false && do_caching ) {
-    if( vips_tilecache( in, &cached1,
-        "access", VIPS_ACCESS_RANDOM,
-        //"access", VIPS_ACCESS_SEQUENTIAL,
-        "threaded", TRUE,
-        "tile-width", TS,
-        "tile-height", TS,
-        "max-tiles", 3 * in->Xsize / TS,
-        NULL ) ) {
-      std::cout << "cannot cache" << std::endl;
-      return;
-    }
-    VIPS_UNREF(in);
-  }
-
+  std::cout<<std::endl<<std::endl<<"======================"<<std::endl
+      <<"slow operation"<<std::endl;
   VipsImage* slow;
   vips_slowop(in, &slow, 2.0, NULL);
-  //if( vips_gaussblur(cached1, &slow, 10, "precision", VIPS_PRECISION_FLOAT, NULL) ) return;
+  jpeg_save( slow );
+
+  VIPS_UNREF(slow);
+  //VIPS_UNREF(out);
   VIPS_UNREF(in);
+}
+
+
+void vips_run2(int padding, bool do_caching, bool cache_blur)
+{
+  const int TS = 128;
+  VipsImage* in = image_in; g_object_ref(in);
+
+  std::cout<<std::endl<<std::endl<<"======================"<<std::endl
+      <<"slow operation + padded, padding="<<padding<<"  caching="<<do_caching<<std::endl;
+  VipsImage* slow;
+  vips_slowop(in, &slow, 2.0, NULL);
 
   VipsImage* cached = slow;
   if( do_caching ) {
     if( vips_tilecache( slow, &cached,
-        "access", VIPS_ACCESS_RANDOM,
-        //"access", VIPS_ACCESS_SEQUENTIAL,
+        //"access", VIPS_ACCESS_RANDOM,
+        "access", VIPS_ACCESS_SEQUENTIAL,
         "threaded", TRUE,
         "tile-width", TS,
         "tile-height", TS,
@@ -88,19 +102,50 @@ void vips_run1(int padding, bool do_caching, bool cache_blur)
       return;
     }
     VIPS_UNREF(slow);
-/*
-    if( vips_tilecache( cached, &cached2,
-        "access", VIPS_ACCESS_RANDOM,
+  }
+
+  VipsImage* padded;
+  vips_paddedop(cached, &padded, padding, NULL);
+  VIPS_UNREF(cached);
+
+  jpeg_save( padded );
+
+  VIPS_UNREF(padded);
+  //VIPS_UNREF(out);
+  VIPS_UNREF(in);
+}
+
+
+void vips_run3(int padding, bool do_caching, bool cache_blur)
+{
+  const int TS = 128;
+  GTimer* timer = g_timer_new();
+
+  std::cout<<std::endl<<std::endl<<"======================"<<std::endl
+      <<"slow operation + padded + blur, padding="<<padding<<"  caching="<<do_caching
+      <<"  blur caching="<<cache_blur<<std::endl;
+ //VipsImage* in = vips_image_new_from_memory( ibuf, W*H*sizeof(MY_PX_TYPE), W, H, 1, VIPS_FORMAT_FLOAT );
+  VipsImage* in = image_in; g_object_ref(in);
+
+  VipsImage* slow;
+  vips_slowop(in, &slow, 2.0, NULL);
+  //if( vips_gaussblur(cached1, &slow, 10, "precision", VIPS_PRECISION_FLOAT, NULL) ) return;
+  //VIPS_UNREF(cached1);
+
+  VipsImage* cached = slow;
+  if( do_caching ) {
+    if( vips_tilecache( slow, &cached,
+        //"access", VIPS_ACCESS_RANDOM,
+        "access", VIPS_ACCESS_SEQUENTIAL,
         "threaded", TRUE,
         "tile-width", TS,
         "tile-height", TS,
-        "max-tiles", 3 * cached->Xsize / TS,
+        "max-tiles", 3 * slow->Xsize / TS,
         NULL ) ) {
       std::cout << "cannot cache" << std::endl;
       return;
     }
-    VIPS_UNREF(cached);
-*/
+    VIPS_UNREF(slow);
   }
 
 
@@ -111,8 +156,8 @@ void vips_run1(int padding, bool do_caching, bool cache_blur)
   VipsImage* cached2 = padded;
   if( cache_blur ) {
   if( vips_tilecache( padded, &cached2,
-      "access", VIPS_ACCESS_RANDOM,
-      //"access", VIPS_ACCESS_SEQUENTIAL,
+      //"access", VIPS_ACCESS_RANDOM,
+      "access", VIPS_ACCESS_SEQUENTIAL,
       "threaded", TRUE,
       "tile-width", TS,
       "tile-height", TS,
@@ -128,17 +173,17 @@ void vips_run1(int padding, bool do_caching, bool cache_blur)
   if( vips_gaussblur(cached2, &blurred, 1, "precision", VIPS_PRECISION_FLOAT, NULL) ) return;
   VIPS_UNREF(cached2);
 
-  VipsImage* out = vips_image_new_from_memory( obuf, W*H*sizeof(MY_PX_TYPE), W, H, 1, VIPS_FORMAT_FLOAT );
+  //VipsImage* out = vips_image_new_from_memory( obuf, W*H*sizeof(MY_PX_TYPE), W, H, 1, VIPS_FORMAT_FLOAT );
 
   g_timer_start(timer);
-  vips_image_write( blurred, out );
+  //vips_image_write( blurred, out );
+  jpeg_save( blurred );
   g_timer_stop(timer);
-  std::cout<<"padding: "<<padding<<std::endl<<"caching: "<<do_caching<<std::endl<<"blur caching: "<<cache_blur<<std::endl;
-  std::cout<<"duration: "<<g_timer_elapsed(timer,NULL)<<std::endl<<std::endl<<"======================"<<std::endl;
 
   //vips_jpegsave( out, "v1.jpg", "Q", 50, NULL );
 
-  VIPS_UNREF(out);
+  VIPS_UNREF(blurred);
+  //VIPS_UNREF(out);
   VIPS_UNREF(in);
 }
 
@@ -200,6 +245,7 @@ void lineblur_tilecache_run()
 }
 
 
+
 int main(int argc, char** argv)
 {
   char* fullpath;
@@ -211,7 +257,36 @@ int main(int argc, char** argv)
     //vips::verror ();
     return 1;
 
-  //im_concurrency_set( 2 );
+  int nthreads = atoi(argv[1]);
+
+  std::cout<<"Setting VIPS concurrency to "<<nthreads<<std::endl;
+
+  im_concurrency_set( nthreads );
+  //vips__leak = 1;
+  //vips_cache_set_trace( true );
+  //vips_profile_set(true);
+
+
+  image_in = vips_image_new_from_file( argv[2], NULL );
+  VipsImage* image_copy;
+  if( vips_copy( image_in, &image_copy, NULL) ) {
+    return 1;
+  }
+  VIPS_UNREF( image_in );
+  image_in = image_copy;
+
+  VipsImage* image_float;
+  if( vips_cast_float( image_in, &image_float, NULL) ) {
+    return 1;
+  }
+  VIPS_UNREF( image_in );
+  image_in = image_float;
+
+  fname_out = argv[3];
+
+  W = image_in->Xsize;
+  H = image_in->Ysize;
+
 
   ibuf = (MY_PX_TYPE*)malloc(W*H*sizeof(MY_PX_TYPE));
   if( !ibuf ) {
@@ -225,21 +300,33 @@ int main(int argc, char** argv)
   }
   //std::cout<<"allocated two memory buffers of "<<W*H*sizeof(MY_PX_TYPE)/1024/1024<<"MB"<<std::endl;
 
+  //VipsImage* out = vips_image_new_from_memory( obuf, W*H*sizeof(MY_PX_TYPE), W, H, 1, VIPS_FORMAT_FLOAT );
+  //vips_image_write( image_in, out );
+
+  jpeg_save( image_in );
+  jpeg_save( image_in );
+
+
   //std::cout<<"before fill_pattern()"<<std::endl;
   //fill_pattern(ibuf, W, H);
   //std::cout<<"after fill_pattern()"<<std::endl;
 
-  //im_concurrency_set( 1 );
-  //vips_cache_set_trace( true );
-  vips_profile_set(true);
+  //vips_run1(0, false, false);
+  vips_run1(0, false, false);
 
-  vips_run1(0, false, false);
-  vips_run1(0, false, false);
-  vips_run1(0, true, false);
-  vips_run1(64, false, false);
-  vips_run1(64, true, false);
-  vips_run1(64, false, true);
-  vips_run1(64, true, true);
+  vips_run2(0, false, false);
+  vips_run2(0, true, false);
+  //vips_run2(64, false, false);
+  vips_run2(64, true, false);
+  //vips_run1(0, true, false);
+  vips_run3(0, false, true);
+  //vips_run1(0, true, true);
+  //vips_run1(64, false, false);
+  //vips_run1(64, true, false);
+  //vips_run1(64, false, true);
+  vips_run3(64, true, true);
+
+  VIPS_UNREF( image_in );
 
   vips_shutdown();
   return 0;

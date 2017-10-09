@@ -112,6 +112,10 @@ vips_paddedop_gen( VipsRegion *oreg, void *seq, void *a, void *b, gboolean *stop
   VipsRect r_img = {0, 0, ir[0]->im->Xsize, ir[0]->im->Ysize};
   vips_rect_intersectrect (&s, &r_img, &s);
 
+  if( false && r->top == 0 && r->left == 0 )
+    std::cout<<"[paddedop] output region: top="<<r->top<<" left="<<r->left
+    <<" width="<<r->width<<" height="<<r->height<<std::endl;
+
   /* Prepare the input images
    */
   if( vips_region_prepare( ir[0], &s ) )
